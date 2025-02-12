@@ -85,12 +85,12 @@ if __name__ == '__main__':
     model_path = 'weights/xfeat.onnx'
     # model_path = 'weights/superpoint.onnx'
 
-    # test_onnx_model_speed(model_path, (1, 3, 640, 360))
-    # quit()
+    test_onnx_model_speed(model_path, (1, 3, 640, 360))
+    quit()
 
     img_path = random.choice(glob.glob(r'D:\projects\xfeat_lightglue_onnx\assets\s*.*g'))
     # resize to 640x360
-    output = inference_onnx_model(model_path, img_path, target_size=(1280, 720))
+    output = inference_onnx_model(model_path, img_path, target_size=(640, 360))
     # print(f'Output shape: {output[0].shape}')
     kpts = output[0]
     # kpts = output[0][0]
