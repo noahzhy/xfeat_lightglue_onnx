@@ -2,27 +2,28 @@ import os, glob, sys, random
 from time import perf_counter
 
 import cv2
+import torch
 import numpy as np
 import onnxruntime as ort
 from PIL import Image
 
-# set np seed
+# set seed
+torch.manual_seed(0)
 np.random.seed(0)
-# set random seed
 random.seed(0)
 
 
 # onnx inference
-def inference_onnx_model(model_path, img_path, target_size=(640, 360)):
-    img = Image.open(img_path).convert('RGB')
-    # img = Image.open(img_path).convert('L')
-    if img.size != target_size:
-        img = img.resize(target_size)
-    # transpose to CHW
-    w, h = img.size
-    img = np.array(img).astype(np.float32)
-    # img = np.expand_dims(img, axis=-1)
-    img = np.expand_dims(img.transpose(2, 0, 1), axis=0) / 255.0
+def inference_onnx_model(model_path, img_path, target_size=(480, 640)):
+    img = cv2.imread(img_path)
+    resize_img = img = cv2.resize(img, target_size)
+    img = cv2.cvtColor(resize_img, cv2.COLOR_BGR2RGB)
+    img = torch.tensor(img).permute(2, 0, 1).unsqueeze(0).float()
+
+    # to numpy
+    img = img.numpy()
+    # img = np.transpose(img, (2, 0, 1))
+    # img = np.expand_dims(img, axis=0).astype(np.float32) / 255.0
 
     session = ort.InferenceSession(model_path)
     input_name = session.get_inputs()[0].name
@@ -31,7 +32,7 @@ def inference_onnx_model(model_path, img_path, target_size=(640, 360)):
     output = session.run(None, {input_name: img})
     for i in output:
         print(i.shape)
-    return output
+    return output, resize_img
 
 
 def test_onnx_model_speed(model_path, input_shape, warm_up=20, test=200, force_cpu=True):
@@ -81,24 +82,29 @@ def draw_points(img, points, size=2, color=(255, 0, 0), thickness=-1):
 
 
 if __name__ == '__main__':
-    # model_path = 'weights/xfeat_dense.onnx'
-    model_path = 'weights/xfeat.onnx'
-    # model_path = 'weights/superpoint.onnx'
+    # model_path = 'onnx/xfeat_dense.onnx'
+    model_path = r'D:\projects\xfeat_lightglue_onnx\weights\xfeat.onnx'
+    # model_path = r'D:\projects\xfeat_lightglue_onnx\weights\xfeat_640x360.onnx'
+    # print md5 in windows
+    print(f'Model MD5: {os.popen(f'CertUtil -hashfile {model_path} MD5').read().splitlines()[1]}')
+    # model_path = 'onnx/superpoint.onnx'
 
-    test_onnx_model_speed(model_path, (1, 3, 640, 360))
-    quit()
+    # test_onnx_model_speed(model_path, (1, 3, 640, 360))
+    # quit()
 
     img_path = random.choice(glob.glob(r'D:\projects\xfeat_lightglue_onnx\assets\s*.*g'))
     # resize to 640x360
-    output = inference_onnx_model(model_path, img_path, target_size=(640, 360))
+    output, resize_img = inference_onnx_model(model_path, img_path, target_size=(360, 640))
     # print(f'Output shape: {output[0].shape}')
+
     kpts = output[0]
-    # kpts = output[0][0]
-    scale = output[-1]
+    scores = output[-1]
+    print(f'scores: {scores}')
     print(f'Keypoints shape: {kpts.shape}')
+    # filter keypoints
+    kpts = kpts[scores > 0.1]
     # to visualize keypoints
-    img = cv2.imread(img_path)
-    img = draw_points(img, kpts)
+    img = draw_points(resize_img, kpts)
     cv2.imshow('Image', img)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
