@@ -3,7 +3,7 @@ import os.path
 from typing import List
 import torch
 
-from module_onnx.xfeat import XFeat
+from modules.xfeat import XFeat
 # from lightglue_onnx.end2end import normalize_keypoints
 from utils import load_image
 
@@ -36,16 +36,9 @@ def parse_args() -> argparse.Namespace:
 
     parser.add_argument(
         "--dense",
-        default=True,
-        action="store_true",
-        help="Whether to export a dense keypoints extractor instead of simple extractor.",
-    )
-
-    parser.add_argument(
-        "--end2end",
         default=False,
         action="store_true",
-        help="Whether to export an end-to-end pipeline instead of individual models.",
+        help="Whether to export a dense keypoints extractor instead of simple extractor.",
     )
 
     # Extractor-specific args:
@@ -67,62 +60,23 @@ def export_onnx(
     img1_path="assets/tgt.png",
     dynamic=False,
     dense=False,
-    end2end=False,
-    top_k=None,
+    top_k=2048,
 ):
     # Sample images for tracing
-    image0, _ = load_image(img0_path)
+    image0, _ = load_image(img0_path, resize=(640, 360))
     image1, _ = load_image(img1_path)
 
     # Models
-    xfeat = XFeat(weights=xfeat_path, top_k=top_k).eval()
+    print(f'keypoints: {top_k}')
+    xfeat = XFeat(weights=xfeat_path, top_k=top_k, detection_threshold=0.05).eval()
 
-    # ONNX Export
-    if end2end:=False:
-        # ------------------------------
-        # Export Extractor and Matching
-        # ------------------------------
-        output_path = xfeat_path.replace(".pt", "_e2e.onnx")
-        xfeat.forward = xfeat.match_xfeat
-
-        if dense:
-            xfeat.forward = xfeat.match_xfeat_star
-            output_path = xfeat_path.replace(".pt", "_dense_e2e.onnx")
-
-        dynamic_axes = {
-            "mkpts0": {0: "num_keypoints"},
-            "mkpts1": {0: "num_keypoints"},
-        }
-        if dynamic:
-            dynamic_axes.update({"image0": {2: "height", 3: "width"},
-                                 "image1": {2: "height", 3: "width"}})
-        else:
-            print(
-                f"WARNING: Exporting without --dynamic implies that the extractor's input image size will be locked to {image0.shape[-2:]}"
-            )
-            output_path = output_path.replace(
-                ".onnx", f"_{image0.shape[-2]}x{image0.shape[-1]}.onnx"
-            )
-
-        torch.onnx.export(
-            xfeat,
-            (image0, image1),
-            output_path,
-            verbose=False,
-            do_constant_folding=True,
-            input_names=["image0", "image1"],
-            output_names=["mkpts0", "mkpts1"],
-            opset_version=17,
-            dynamic_axes=dynamic_axes,
-        )
-
-    else:
+    if 1:
         # -----------------
         # Export Extractor
         # -----------------
         dynamic_axes = {
             "keypoints": {0: "num_keypoints"},
-            "descriptors": {0: "num_keypoints"}
+            "descriptors": {0: "num_keypoints", 1: "descriptor_dim"},
         }
 
         if dense:
@@ -156,7 +110,7 @@ def export_onnx(
             do_constant_folding=True,
             input_names=["images"],
             output_names=output_names,
-            opset_version=17,
+            opset_version=20,
             dynamic_axes=dynamic_axes,
         )
 
