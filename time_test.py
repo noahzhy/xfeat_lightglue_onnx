@@ -83,16 +83,16 @@ def draw_points(img, points, size=2, color=(255, 0, 0), thickness=-1):
 
 if __name__ == '__main__':
     # model_path = 'onnx/xfeat_dense.onnx'
-    model_path = r'D:\projects\xfeat_lightglue_onnx\weights\xfeat.onnx'
-    # model_path = r'D:\projects\xfeat_lightglue_onnx\weights\xfeat_640x360.onnx'
+    model_path = 'weights/xfeat.onnx'
+    model_path = 'weights/xfeat_dense.onnx'
     # print md5 in windows
-    print(f'Model MD5: {os.popen(f'CertUtil -hashfile {model_path} MD5').read().splitlines()[1]}')
+    # print(f'Model MD5: {os.popen(f'CertUtil -hashfile {model_path} MD5').read().splitlines()[1]}')
     # model_path = 'onnx/superpoint.onnx'
 
-    # test_onnx_model_speed(model_path, (1, 3, 640, 360))
-    # quit()
+    test_onnx_model_speed(model_path, (1, 3, 640, 360))
+    quit()
 
-    img_path = random.choice(glob.glob(r'D:\projects\xfeat_lightglue_onnx\assets\s*.*g'))
+    img_path = random.choice(glob.glob('assets/s*.*g'))
     # resize to 640x360
     output, resize_img = inference_onnx_model(model_path, img_path, target_size=(360, 640))
     # print(f'Output shape: {output[0].shape}')
