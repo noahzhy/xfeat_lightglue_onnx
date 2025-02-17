@@ -179,10 +179,12 @@ class Matcher(OrtRun):
 
 if __name__ == '__main__':
     extractor = FeatExtractor('onnx/xfeat_1024_640x360.onnx')
-    matcher = Matcher('onnx/lighterglue_L3.onnx')
+    matcher = Matcher('onnx/lighterglue_L6.onnx')
 
-    im1 = 'assets/001.jpg'
-    im2 = 'assets/002.jpg'
+    im1 = 'assets/hard/image_6.jpg'
+    im2 = 'assets/hard/image_7.jpg'
+    # im1 = 'assets/001.jpg'
+    # im2 = 'assets/002.jpg'
     # im1 = 'assets/003.png'
     # im2 = 'assets/004.png'
     # im1 = 'assets/ref.png'

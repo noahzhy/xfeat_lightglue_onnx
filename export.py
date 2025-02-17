@@ -7,6 +7,17 @@ from modules.xfeat import XFeat
 from modules.lighterglue import LighterGlue
 from utils import load_image
 
+import onnx
+import onnxsim
+from onnxsim import simplify
+
+
+def sim(model_path):
+    print(f"Simlifying {model_path}")
+    onnx_model = onnx.load(model_path)
+    model_simp, check = onnxsim.simplify(onnx_model)
+    onnx.save(model_simp, model_path)
+
 
 def export_onnx(
     xfeat_path=None,
@@ -57,12 +68,14 @@ def export_onnx(
                 ".onnx",
                 f"_{top_k}_{dummy_input.shape[-2]}x{dummy_input.shape[-1]}.onnx"
             )
+            
+        output_path = os.path.join(output_folder, os.path.basename(output_path))
 
         # Export model
         torch.onnx.export(
             xfeat,
             dummy_input,
-            os.path.join(output_folder, os.path.basename(output_path)),
+            output_path,
             verbose=False,
             do_constant_folding=True,
             input_names=["images"],
@@ -70,6 +83,7 @@ def export_onnx(
             opset_version=20,
             dynamic_axes=dynamic_axes,
         )
+        sim(output_path)
 
         # -----------------
         # Export Matching
@@ -101,12 +115,11 @@ def export_onnx(
         #     xfeat.forward = xfeat.match_onnx
 
         matcher = LighterGlue(n_layers=ligherglue_n_layers).eval()
-        output_path = os.path.join(os.path.dirname(output_path), f"lighterglue_L{ligherglue_n_layers}.onnx")
-
+        output_path = os.path.join(output_folder, f"lighterglue_L{ligherglue_n_layers}.onnx")
         torch.onnx.export(
             matcher,
             (kpts, kpts, desc, desc),
-            os.path.join(output_folder, os.path.basename(output_path)),
+            output_path,
             verbose=False,
             do_constant_folding=True,
             input_names=["kpts0", "kpts1", "desc0", "desc1"],
@@ -114,13 +127,16 @@ def export_onnx(
             opset_version=20,
             dynamic_axes=dynamic_axes,
         )
+        sim(output_path)
+
 
 
 if __name__ == "__main__":
     export_onnx(
         xfeat_path="weights/xfeat.pt",
         output_folder="onnx",
-        input_shape=(1, 3, 640, 360),
+        # input_shape=(1, 3, 640, 360),
+        input_shape=(1, 3, 1280, 720),
         ligherglue_n_layers=6,
         dynamic=False,
         dense=False,
