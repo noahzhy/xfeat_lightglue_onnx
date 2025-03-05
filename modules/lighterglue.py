@@ -25,7 +25,8 @@ class LighterGlue(nn.Module):
         "flash": True,  # enable FlashAttention if available.
         "mp": False,  # enable mixed precision
         "depth_confidence": -1,  # early stopping, disable with -1
-        "width_confidence": 0.95,  # point pruning, disable with -1
+        # "width_confidence": 0.95,  # point pruning, disable with -1
+        "width_confidence": -1,  # disabled because onnx is not supported dynamic control flow
         "filter_threshold": 0.1,  # match threshold
         "weights": None,
     }
@@ -57,32 +58,17 @@ class LighterGlue(nn.Module):
         self.net.load_state_dict(state_dict, strict=False)
         self.net.to(self.dev)
 
-    # @torch.inference_mode()
-    # def forward(self, data, min_conf=0.1):
-    #     self.net.conf.filter_threshold = min_conf
-    #     result = self.net({
-    #         'image0': {
-    #             'keypoints': data['keypoints0'],
-    #             'descriptors': data['descriptors0'],
-    #             'image_size': data['image_size0']},
-    #         'image1': {
-    #             'keypoints': data['keypoints1'],
-    #             'descriptors': data['descriptors1'],
-    #             'image_size': data['image_size1']
-    #         }})
-    #     return result
-
     @torch.inference_mode()
     def forward(self, kpt0, kpt1, desc0, desc1):
-        # self.net.conf.filter_threshold
         result = self.net(kpt0, kpt1, desc0, desc1)
         return result
 
 
 if __name__ == '__main__':
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    model = LighterGlue().eval()
-    n_kpts = 1024
+    model = LighterGlue(n_layers=3).eval()
+    # n_kpts = 1024
+    n_kpts = 512
     kpt0 = torch.randn(1, n_kpts, 2).to(device)
     kpt1 = torch.randn(1, n_kpts, 2).to(device)
     desc0 = torch.randn(1, n_kpts, 64).to(device)
@@ -94,6 +80,13 @@ if __name__ == '__main__':
     outputs = model(kpt0, kpt1, desc0, desc1)
     matchers = outputs[0]
     scores = outputs[1]
-    matchers = matchers[scores > 0.1]
+    # matchers = matchers[scores > 0.1]
     print(f'scores: {scores.shape}')
     print(f'matchers: {matchers.shape}') # shape: (n, 2), n for randn should be 0-5
+
+    # calculate flops and params
+    from thop import profile
+    flops, params = profile(model, inputs=(kpt0, kpt1, desc0, desc1))
+    # GFLOPS and M Params
+    print(f'GFLOPS: {flops / 1e9:.3f}')
+    print(f'M Params: {params / 1e6:.3f}')

@@ -68,7 +68,7 @@ def draw_matches(img0, img1, kpts0, kpts1, matches, scores, threshold=0.1, show_
         pt0 = tuple(map(int, kpts0[m[0]]))
         pt1 = tuple(map(int, kpts1[m[1]]))
         color = plt.cm.jet(score)
-        dot_size = score * 2.5 + 0.5
+        dot_size = score * 2 + 0.2
         pts.append((pt0, pt1, dot_size, color))
         if show_lines:
             plt.plot((pt0[0], pt1[0] + w0), (pt0[1], pt1[1]), color=color, linewidth=0.1)
@@ -156,14 +156,20 @@ class FeatExtractor(OrtRun):
 
     def postprocess(self, data):
         kpt0, desc0, score0 = data
-        # kpt0 = kpt0[score0 > 0.1]
-        # desc0 = desc0[score0 > 0.1]
+        # # sort by score
+        # idx = np.argsort(score0, axis=0)[::-1]
+        # kpt0 = kpt0[idx]
+        # desc0 = desc0[idx]
+        # # topk = half of the keypoints
+        # kpt0 = kpt0[:len(kpt0) // 2]
+        # desc0 = desc0[:len(desc0) // 2]
         return kpt0, desc0
 
 
 class Matcher(OrtRun):
-    def __init__(self, model_path, force_cpu=True):
-        super().__init__(model_path, force_cpu)
+    def __init__(self, model_path, force_cpu=True, threshold=0.5, **kwargs):
+        super().__init__(model_path, force_cpu, **kwargs)
+        self.threshold = threshold
 
     def preprocess(self, data):
         # add batch dim
@@ -172,19 +178,22 @@ class Matcher(OrtRun):
 
     def postprocess(self, data):
         matches, scores = data
+        matches = matches[scores > self.threshold]
+        scores = scores[scores > self.threshold]
+
         if len(matches) == 0:
             return np.array([]), np.array([])
         return matches, scores
 
 
 if __name__ == '__main__':
-    extractor = FeatExtractor('onnx/xfeat_1024_640x360.onnx')
-    matcher = Matcher('onnx/lighterglue_L6.onnx')
+    extractor = FeatExtractor('onnx/xfeat_2048_640x360.onnx')
+    matcher = Matcher('onnx/lighterglue_L3.onnx', threshold=0.7)
 
-    im1 = 'assets/hard/image_6.jpg'
-    im2 = 'assets/hard/image_7.jpg'
-    # im1 = 'assets/001.jpg'
-    # im2 = 'assets/002.jpg'
+    # im1 = 'assets/hard/image_6.jpg'
+    # im2 = 'assets/hard/image_7.jpg'
+    im1 = 'assets/001.jpg'
+    im2 = 'assets/002.jpg'
     # im1 = 'assets/003.png'
     # im2 = 'assets/004.png'
     # im1 = 'assets/ref.png'
@@ -193,6 +202,7 @@ if __name__ == '__main__':
     im2 = cv2.imread(im2)
 
     h, w = 640, 360
+    # h, w = 1280, 720
     im1 = resize_img(im1, height=h, width=w)
     im2 = resize_img(im2, height=h, width=w)
     print(im1.shape, im2.shape)
@@ -214,7 +224,7 @@ if __name__ == '__main__':
             im1, im2,
             kpt1, kpt2,
             matches, scores,
-            threshold=0.5,
+            threshold=.0,
             show_lines=True
         )
         print(f"Found {len(matches)} matches above threshold")

@@ -116,7 +116,7 @@ class XFeatModel(nn.Module):
         """
         B, C, H, W = x.shape
         # The current ONNX export does not support dynamic shape unfold
-        if True:
+        if torch.onnx.is_in_onnx_export():
             x = x[..., :x.shape[2] // ws * ws, :x.shape[3] // ws * ws]
             B, C, H, W = x.shape
             return torch.reshape(x, (B, C, H // ws, ws, W // ws, ws)).permute(0, 1, 3, 5, 2, 4).flatten(1, 3)

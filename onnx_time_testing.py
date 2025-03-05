@@ -2,36 +2,26 @@ import os, glob, sys, random
 from time import perf_counter
 
 import cv2
-import torch
 import numpy as np
 import onnxruntime as ort
 from PIL import Image
 
 # set seed
-torch.manual_seed(0)
 np.random.seed(0)
 random.seed(0)
 
 
-# onnx inference
 def inference_onnx_model(model_path, img_path, target_size=(480, 640)):
     img = cv2.imread(img_path)
-    resize_img = img = cv2.resize(img, target_size)
-    img = cv2.cvtColor(resize_img, cv2.COLOR_BGR2RGB)
-    img = torch.tensor(img).permute(2, 0, 1).unsqueeze(0).float()
-
-    # to numpy
-    img = img.numpy()
-    # img = np.transpose(img, (2, 0, 1))
-    # img = np.expand_dims(img, axis=0).astype(np.float32) / 255.0
-
+    resize_img = cv2.resize(img, target_size)
+    img_rgb = cv2.cvtColor(resize_img, cv2.COLOR_BGR2RGB)
+    # Prepare input: convert to NCHW format
+    img_input = np.transpose(img_rgb, (2, 0, 1))
+    img_input = np.expand_dims(img_input, axis=0).astype(np.float32)
+    # Run inference
     session = ort.InferenceSession(model_path)
     input_name = session.get_inputs()[0].name
-    # output_name = session.get_outputs()[0].name
-    # Run the model
-    output = session.run(None, {input_name: img})
-    for i in output:
-        print(i.shape)
+    output = session.run(None, {input_name: img_input})
     return output, resize_img
 
 
@@ -81,11 +71,11 @@ def draw_points(img, points, size=2, color=(255, 0, 0), thickness=-1):
 
 
 if __name__ == '__main__':
-    model_path = 'onnx/xfeat.onnx'
+    model_path = 'onnx/xfeat_2048_640x360.onnx'
     # model_path = 'onnx/xfeat_1024.onnx'
     # model_path = 'onnx/xfeat_2048.onnx'
     input_shapes = {
-        'images': np.random.random((1, 3, 360, 640)).astype(np.float32)
+        'images': np.random.random((1, 3, 640, 360)).astype(np.float32)
     }
 
     model_path = 'onnx/lighterglue_L3.onnx'
@@ -104,7 +94,7 @@ if __name__ == '__main__':
     test_onnx_model_speed(model_path, input_shapes)
     quit()
 
-    img_path = random.choice(glob.glob('assets/s*.*g'))
+    img_path = random.choice(glob.glob('assets/0*.*g'))
     # resize to 640x360
     output, resize_img = inference_onnx_model(model_path, img_path, target_size=(360, 640))
     # print(f'Output shape: {output[0].shape}')

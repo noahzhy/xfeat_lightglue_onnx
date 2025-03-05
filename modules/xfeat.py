@@ -73,8 +73,7 @@ class XFeat(nn.Module):
 
         # Convert logits to heatmap and extract kpts
         K1h = self.get_kpts_heatmap(K1)
-        mkpts = self.NMS(
-            K1h, threshold=self.detection_threshold, kernel_size=5)
+        mkpts = self.NMS(K1h)
 
         # Compute reliability scores
         _nearest = InterpolateSparse2d('nearest')
@@ -291,18 +290,14 @@ class XFeat(nn.Module):
 
     #     return pos
 
-    def NMS(self, x, threshold=0.05, kernel_size=5):
-        _, _, H, W = x.shape
+    def NMS(self, x):
         local_max = nn.MaxPool2d(
-            kernel_size=kernel_size,
+            kernel_size=5,
             stride=1,
-            padding=kernel_size//2,
+            padding=5//2,
         )(x)
-        pos = (x == local_max) & (x > threshold)
+        pos = (x == local_max)
         return pos.squeeze().nonzero().flip(-1).reshape(1, -1, 2)
-        # pos_batched = [k.nonzero()[..., 1:].flip(-1).reshape(1, -1, 2) for k in pos]
-        # print(f'pos_batched: {pos_batched[0].shape}')
-        # return torch.cat(pos_batched, dim=0)
 
 
     @torch.inference_mode()
