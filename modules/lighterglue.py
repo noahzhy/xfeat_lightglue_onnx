@@ -1,5 +1,3 @@
-
-# from kornia.feature.lightglue import LightGlue
 from modules.lightglue import LightGlue
 from torch import nn
 import numpy as np
@@ -85,8 +83,10 @@ if __name__ == '__main__':
     print(f'matchers: {matchers.shape}') # shape: (n, 2), n for randn should be 0-5
 
     # calculate flops and params
-    from thop import profile
-    flops, params = profile(model, inputs=(kpt0, kpt1, desc0, desc1))
-    # GFLOPS and M Params
-    print(f'GFLOPS: {flops / 1e9:.3f}')
-    print(f'M Params: {params / 1e6:.3f}')
+    from thop import profile, clever_format
+    macs, params = profile(model, inputs=(kpt0, kpt1, desc0, desc1))
+    flops = macs * 2  # because of the complex multiplication
+    macs, flops, params = clever_format([macs, flops, params], "\t%.2f ")
+    print(f'Total MACs: {macs}')
+    print(f'Total GFLOPs: {flops}')
+    print(f'Total Params: {params}')

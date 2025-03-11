@@ -134,11 +134,11 @@ def export_onnx(
 if __name__ == "__main__":
     export_onnx(
         xfeat_path="weights/xfeat.pt",
-        output_folder="onnx",
-        # input_shape=(1, 3, 640, 360),
-        input_shape=(1, 3, 1280, 720),
-        ligherglue_n_layers=6,
+        output_folder="/Users/haoyu/Downloads/stitching_v2/lib/weights/onnx",
+        input_shape=(1, 3, 384, 384),
+        # input_shape=(1, 3, 1280, 720),
+        ligherglue_n_layers=3,
         dynamic=False,
         dense=False,
-        top_k=2048,
+        top_k=1024,
     )
