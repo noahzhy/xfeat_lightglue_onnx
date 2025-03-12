@@ -12,6 +12,9 @@ import onnxsim
 from onnxsim import simplify
 
 
+ONNX_OPSET_VERSION = 17
+
+
 def sim(model_path):
     print(f"Simlifying {model_path}")
     onnx_model = onnx.load(model_path)
@@ -80,7 +83,7 @@ def export_onnx(
             do_constant_folding=True,
             input_names=["images"],
             output_names=output_names,
-            opset_version=20,
+            opset_version=ONNX_OPSET_VERSION,
             dynamic_axes=dynamic_axes,
         )
         sim(output_path)
@@ -124,7 +127,7 @@ def export_onnx(
             do_constant_folding=True,
             input_names=["kpts0", "kpts1", "desc0", "desc1"],
             output_names=["matches", "scores"],
-            opset_version=20,
+            opset_version=ONNX_OPSET_VERSION,
             dynamic_axes=dynamic_axes,
         )
         sim(output_path)
@@ -135,9 +138,8 @@ if __name__ == "__main__":
     export_onnx(
         xfeat_path="weights/xfeat.pt",
         output_folder="onnx",
-        # input_shape=(1, 3, 640, 360),
-        input_shape=(1, 3, 1280, 720),
-        ligherglue_n_layers=6,
+        input_shape=(1, 3, 384, 384),
+        ligherglue_n_layers=3,
         dynamic=False,
         dense=False,
         top_k=2048,
