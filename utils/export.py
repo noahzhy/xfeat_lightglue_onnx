@@ -12,6 +12,9 @@ import onnxsim
 from onnxsim import simplify
 
 
+ONNX_OPSET_VERSION = 17
+
+
 def sim(model_path):
     print(f"Simlifying {model_path}")
     onnx_model = onnx.load(model_path)
@@ -80,7 +83,7 @@ def export_onnx(
             do_constant_folding=True,
             input_names=["images"],
             output_names=output_names,
-            opset_version=20,
+            opset_version=ONNX_OPSET_VERSION,
             dynamic_axes=dynamic_axes,
         )
         sim(output_path)
@@ -124,7 +127,7 @@ def export_onnx(
             do_constant_folding=True,
             input_names=["kpts0", "kpts1", "desc0", "desc1"],
             output_names=["matches", "scores"],
-            opset_version=20,
+            opset_version=ONNX_OPSET_VERSION,
             dynamic_axes=dynamic_axes,
         )
         sim(output_path)
@@ -134,9 +137,14 @@ def export_onnx(
 if __name__ == "__main__":
     export_onnx(
         xfeat_path="weights/xfeat.pt",
+<<<<<<< HEAD:utils/export.py
         output_folder="/Users/haoyu/Downloads/stitching_v2/lib/weights/onnx",
         input_shape=(1, 3, 384, 384),
         # input_shape=(1, 3, 1280, 720),
+=======
+        output_folder="onnx",
+        input_shape=(1, 3, 384, 384),
+>>>>>>> fad90960c9a114aa7f1a508c22299f6346c74547:export.py
         ligherglue_n_layers=3,
         dynamic=False,
         dense=False,

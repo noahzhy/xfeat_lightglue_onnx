@@ -1,8 +1,11 @@
 # Byte-compiled / optimized / DLL files
 assets/*
 onnx/*
+<<<<<<< HEAD
 *.csv
 *.json
+=======
+>>>>>>> fad90960c9a114aa7f1a508c22299f6346c74547
 
 __pycache__/
 *.py[cod]
