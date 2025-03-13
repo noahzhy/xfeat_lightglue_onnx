@@ -22,9 +22,8 @@ class LighterGlue(nn.Module):
         "num_heads": 1,
         "flash": True,  # enable FlashAttention if available.
         "mp": False,  # enable mixed precision
-        "depth_confidence": -1,  # early stopping, disable with -1
-        # "width_confidence": 0.95,  # point pruning, disable with -1
-        "width_confidence": -1,  # disabled because onnx is not supported dynamic control flow
+        "depth_confidence": 0.95,  # -1 is no early stopping, recommend: 0.95
+        "width_confidence": 0.99,  # -1 is no point pruning, recommend: 0.99
         "filter_threshold": 0.1,  # match threshold
         "weights": None,
     }
