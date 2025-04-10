@@ -108,10 +108,11 @@ def normalize_kpts(kpts, im_height, im_width):
     if len(kpts.shape) == 3:
         kpts = kpts.squeeze(0)
     kpts = kpts.copy()
-    print('im_height:', im_height, 'im_width:', im_width)
-    kpts[:, 0] = kpts[:, 0] / im_width
-    kpts[:, 1] = kpts[:, 1] / im_height
-    return kpts
+    size = np.array([im_width, im_height])
+    shift = size / 2
+    scale = size.max() / 2
+    kpts = (kpts - shift) / scale
+    return kpts.astype(np.float32)
 
 
 class OrtRun:
@@ -187,7 +188,7 @@ class Matcher(OrtRun):
 
 
 if __name__ == '__main__':
-    extractor = FeatExtractor('onnx/xfeat_2048_640x360.onnx')
+    extractor = FeatExtractor('onnx/xfeat_2048_1280x720.onnx')
     matcher = Matcher('onnx/lighterglue_L3.onnx', threshold=0.7)
 
     # im1 = 'assets/hard/image_6.jpg'
@@ -201,8 +202,8 @@ if __name__ == '__main__':
     im1 = cv2.imread(im1)
     im2 = cv2.imread(im2)
 
-    h, w = 640, 360
-    # h, w = 1280, 720
+    # h, w = 640, 360
+    h, w = 1280, 720
     im1 = resize_img(im1, height=h, width=w)
     im2 = resize_img(im2, height=h, width=w)
     print(im1.shape, im2.shape)

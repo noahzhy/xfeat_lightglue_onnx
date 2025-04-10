@@ -94,7 +94,8 @@ def export_onnx(
 
         # Simulate keypoints, features
         top_k = 4096 if top_k is None else top_k
-        kpts = torch.rand(1, top_k, 2, dtype=torch.float32)
+        kpts = torch.rand(1, top_k, 2, dtype=torch.float32) * 2 - 1
+        print(kpts)
         desc = torch.rand(1, top_k, 64, dtype=torch.float32)
 
         # Dynamic input
@@ -137,16 +138,10 @@ def export_onnx(
 if __name__ == "__main__":
     export_onnx(
         xfeat_path="weights/xfeat.pt",
-<<<<<<< HEAD:utils/export.py
-        output_folder="/Users/haoyu/Downloads/stitching_v2/lib/weights/onnx",
-        input_shape=(1, 3, 384, 384),
-        # input_shape=(1, 3, 1280, 720),
-=======
         output_folder="onnx",
-        input_shape=(1, 3, 384, 384),
->>>>>>> fad90960c9a114aa7f1a508c22299f6346c74547:export.py
+        input_shape=(1, 3, 1280, 720),
         ligherglue_n_layers=3,
         dynamic=False,
         dense=False,
-        top_k=1024,
+        top_k=2048,
     )

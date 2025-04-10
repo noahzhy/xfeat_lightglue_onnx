@@ -1,11 +1,9 @@
 # Byte-compiled / optimized / DLL files
 assets/*
 onnx/*
-<<<<<<< HEAD
 *.csv
 *.json
-=======
->>>>>>> fad90960c9a114aa7f1a508c22299f6346c74547
+.DS_Store
 
 __pycache__/
 *.py[cod]
@@ -166,4 +164,3 @@ cython_debug/
 #  and can be added to the global gitignore or merged into this file.  For a more nuclear
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
-matches.png
