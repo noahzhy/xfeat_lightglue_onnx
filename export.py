@@ -129,7 +129,7 @@ def export_onnx(
             input_names=["kpts0", "kpts1", "desc0", "desc1"],
             output_names=["matches", "scores"],
             opset_version=ONNX_OPSET_VERSION,
-            dynamic_axes=dynamic_axes,
+            dynamic_axes=dynamic_axes if dynamic else None,
         )
         sim(output_path)
 
