@@ -1,15 +1,16 @@
-import os.path
+import os, sys
 from typing import List
-import numpy as np
+from pathlib import Path
+
+import onnx
 import torch
+import onnxsim
+import numpy as np
+from onnxsim import simplify
 
 from modules.xfeat import XFeat
 from modules.lighterglue import LighterGlue
 from utils import load_image
-
-import onnx
-import onnxsim
-from onnxsim import simplify
 
 
 ONNX_OPSET_VERSION = 17
@@ -84,7 +85,7 @@ def export_onnx(
             input_names=["images"],
             output_names=output_names,
             opset_version=ONNX_OPSET_VERSION,
-            dynamic_axes=dynamic_axes,
+            dynamic_axes=dynamic_axes if dynamic else None,
         )
         sim(output_path)
 
@@ -95,17 +96,18 @@ def export_onnx(
         # Simulate keypoints, features
         top_k = 4096 if top_k is None else top_k
         kpts = torch.rand(1, top_k, 2, dtype=torch.float32) * 2 - 1
-        print(kpts)
+        print(kpts.shape)
+        # sys.exit(0)
         desc = torch.rand(1, top_k, 64, dtype=torch.float32)
 
         # Dynamic input
         dynamic_axes={
-            "kpts0": {1: "num_keypoints0"},
-            "kpts1": {1: "num_keypoints1"},
-            "desc0": {1: "num_keypoints0"},
-            "desc1": {1: "num_keypoints1"},
-            "matches": {0: "num_matches"},
-            "scores": {0: "num_matches"},
+            "kpts0":    {1: "num_keypoints0"},
+            "kpts1":    {1: "num_keypoints1"},
+            "desc0":    {1: "num_keypoints0"},
+            "desc1":    {1: "num_keypoints1"},
+            "matches":  {0: "num_matches"},
+            "scores":   {0: "num_matches"},
         }
 
         # if dense:
